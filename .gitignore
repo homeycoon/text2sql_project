@@ -1,0 +1,6 @@
+venv/
+.idea
+__pycache__/
+__mypy__/
+.env
+.env.docker

@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  t2s_db:
+    image: postgres:14
+    container_name: t2s_postgres
+    restart: always
+    env_file:
+      - .env.docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - t2s_db_data:/var/lib/postgresql/t2s_db_data
+    networks:
+      - t2s_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U AI_test_user -d AI_test_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  t2s_redis:
+    image: redis:latest
+    container_name: t2s_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - t2s_redis_data:/t2s_redis_data
+    networks:
+      - t2s_net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  t2s_app:
+    build: ./app
+    container_name: t2s_app
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      t2s_db:
+        condition: service_healthy
+      t2s_redis:
+        condition: service_healthy
+    networks:
+      - t2s_net
+
+networks:
+  t2s_net:
+    driver: bridge
+
+volumes:
+  t2s_db_data:
+  t2s_redis_data:
